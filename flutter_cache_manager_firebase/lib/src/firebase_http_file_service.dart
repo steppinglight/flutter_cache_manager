@@ -13,16 +13,19 @@ class FirebaseHttpFileService extends HttpFileService {
       {Map<String, String> headers = const {}}) async {
     final ref = await FirebaseStorage.instance.getReferenceFromUrl(url);
     final metaData = await ref.getMetadata();
-    final response = http.StreamedResponse(
-      ref.getData(metaData.sizeBytes).asStream(),
-      200,
-      headers: {
+    final headers = {
         HttpHeaders.contentTypeHeader: metaData.contentType,
-        HttpHeaders.cacheControlHeader: metaData.cacheControl,
         HttpHeaders.contentLanguageHeader: metaData.contentLanguage,
         HttpHeaders.dateHeader: metaData.creationTimeMillis.toString(),
         HttpHeaders.contentLocationHeader: metaData.path,
-      },
+    };
+    if (metaData.cacheControl != null) {
+        headers[HttpHeaders.cacheControlHeader] = metaData.cacheControl;
+    }
+    final response = http.StreamedResponse(
+      ref.getData(metaData.sizeBytes).asStream(),
+      200,
+      headers: headers,
     );
 
     return HttpGetResponse(response);
